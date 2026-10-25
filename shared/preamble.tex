@@ -1,0 +1,19 @@
+\usepackage[margin=22mm]{geometry}
+\usepackage{fontspec}
+\setmainfont{texgyretermes}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setsansfont{texgyreheros}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setmonofont{lmmono10-regular.otf}
+\usepackage{amsmath,amssymb,mathtools,bm,booktabs,array,longtable,enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,automata,positioning,calc,fit,shapes.geometric,circuits.logic.US}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!55!black,pdftitle={Introduction to Digital Systems: Questions and Worked Solutions},pdfauthor={Independent study edition},pdfsubject={English exam reconstructions and verified digital logic designs}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\emergencystretch}{2em}
+\setcounter{secnumdepth}{0}
+\newcommand{\NOT}[1]{\overline{#1}}
+\newcommand{\bits}[1]{\texttt{#1}}
+\newenvironment{question}{\par\noindent\textbf{Question.}\ }{\par}
+\newenvironment{solution}{\par\noindent\textbf{Solution.}\ }{\par}
+\tikzset{block/.style={draw,rectangle,minimum width=15mm,minimum height=10mm,align=center},wire/.style={thick},signal/.style={-Latex,thick}}

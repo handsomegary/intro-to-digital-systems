@@ -1,0 +1,15 @@
+{
+  "description": "Anonymous coverage of the specifically requested exam files and algorithm source. Original source files remain outside this repository.",
+  "sources": [
+    {"id": "S1", "type": "pdf", "pages": 2, "role": "Academic Year 112 midterm questions; all ten questions reconstructed"},
+    {"id": "S2", "type": "pdf", "pages": 3, "role": "Midterm reference answers; consulted and independently checked"},
+    {"id": "S3", "type": "docx", "role": "Editable version of the midterm reference answers; no original document published"},
+    {"id": "S4", "type": "photograph", "role": "Academic Year 112 final; complete automatic-door-controller question reconstructed"},
+    {"id": "S5", "type": "python", "role": "Lecture algorithm reference; replaced with a deterministic independent implementation"}
+  ],
+  "midterm": {"question_numbers": [1,2,3,4,5,6,7,8,9,10], "question_9_parts": ["a","b","c"], "printed_total_percent": 140},
+  "final": {"question_numbers": [1], "printed_total_percent": 100},
+  "software_only_questions_omitted": [],
+  "out_of_scope": "Loose Boolean-simplification exercise PDFs, diagram working files, website notes, and the lecture-slide PDF are not additional midterm/final exam sheets. Their originals are not published.",
+  "publication": "Only rewritten English TeX, the rebuilt combined book, rewritten Python, and reproducible verification/build files are public."
+}

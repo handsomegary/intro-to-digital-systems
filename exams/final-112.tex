@@ -1,0 +1,422 @@
+\chapter{Final Examination: Academic Year 112}
+\label{exam:final-112}
+
+\section{1. Automatic-door controller (100\%)}
+\begin{question}
+Design a simple automatic-door controller with two inputs, \(D\) and
+\(\mathrm{Done}\), and two outputs, \(\mathrm{OP}\) and \(\mathrm{CL}\).
+\begin{itemize}
+\item \(D\), detect: an infrared detector asserts this signal when a person
+is approaching the door.
+\item \(\mathrm{Done}\): the motor produces a one-clock-cycle pulse when
+the door reaches either the fully open or the fully closed endpoint.
+\item \(\mathrm{OP}\), open: command the motor to open the door.
+\item \(\mathrm{CL}\), close: command the motor to close the door.
+\end{itemize}
+The required behavior is:
+\begin{enumerate}
+\item While the door is closed and \(D=0\), keep it closed.
+\item If a person is detected while it is closed, assert \(\mathrm{OP}\).
+Keep opening until \(\mathrm{Done}=1\), then deassert \(\mathrm{OP}\).
+\item While fully open, start closing after five continuous seconds with
+no person detected.
+\item Any detection while fully open restarts the five-second interval.
+\item If a person is detected while the door is closing, deassert
+\(\mathrm{CL}\), assert \(\mathrm{OP}\), and reopen until the fully open
+endpoint produces \(\mathrm{Done}=1\).
+\item Otherwise, keep closing until \(\mathrm{Done}=1\), then deassert
+\(\mathrm{CL}\).
+\end{enumerate}
+A \(1\,\mathrm{kHz}\) clock is available: one cycle is \(1\,\mathrm{ms}\).
+An error of up to \(\pm0.2\,\mathrm{s}\) in the five-second delay is acceptable.
+Treat both inputs as synchronous to this clock.
+
+Supply a state diagram, state equations, output equations, and a
+gate-level controller drawing. Explain the meaning of every state.
+Combinational components such as multiplexers and adders may be used as
+clearly labeled blocks. Flip-flops may be drawn without their internal
+circuit or clock wires, but their D and Q pins must be labeled.
+Sequential components, including counters and timers, must be expanded
+into their internal circuit. Hierarchical subcircuits are allowed when
+their connections are clear. The original instructions limit the
+examination answer to one sheet; this study edition expands the derivation
+and diagrams for readability.
+\end{question}
+
+\begin{center}
+\begin{tikzpicture}[>=Latex]
+\node[block,minimum width=35mm,minimum height=22mm] (controller) at (0,0)
+{Door\\controller};
+\draw[signal] (-3,0.55) node[left] {\(D\)} -- (controller.west |- 0,0.55);
+\draw[signal] (-3,-0.55) node[left] {\(\mathrm{Done}\)} -- (controller.west |- 0,-0.55);
+\draw[signal] (controller.east |- 0,0.55) -- (3,0.55) node[right] {\(\mathrm{OP}\)};
+\draw[signal] (controller.east |- 0,-0.55) -- (3,-0.55) node[right] {\(\mathrm{CL}\)};
+\end{tikzpicture}
+\end{center}
+
+\section{Solution: synchronous state machine}
+All input decisions below are made at a rising clock edge. Outputs are
+decoded from the state held after that edge. Thus detecting a person while
+closing switches the command to opening at the detecting edge, without an
+extra waiting state.
+
+The question does not specify power-up initialization. For a reproducible
+implementation, assume the door is initially physically closed and apply
+a synchronous initialization signal \(R\) for one clock edge. It clears
+the state and timer registers. \(R\) is an implementation initialization
+condition, not an additional sensor or a third operational input in the
+question.
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+State & \(s_1s_0\) & Meaning & \((\mathrm{OP},\mathrm{CL})\)\\
+\midrule
+\(\mathsf C\) & 00 & Fully closed & \((0,0)\)\\
+\(\mathsf U\) & 01 & Opening & \((1,0)\)\\
+\(\mathsf H\) & 11 & Fully open; waiting & \((0,0)\)\\
+\(\mathsf X\) & 10 & Closing & \((0,1)\)\\
+\bottomrule
+\end{tabular}
+\end{center}
+Write \(F=\mathrm{Done}\). Let \(T=1\) mean that the timer contains 4999;
+its exact interpretation at the next clock edge is derived below.
+An unlabeled input in a transition condition is irrelevant.
+
+\begin{center}
+\begin{tikzpicture}[>=Latex,node distance=31mm,
+ every state/.style={minimum size=19mm,align=center},font=\small]
+\node[state,initial,initial text={\(R\)}] (c) at (0,0) {\(\mathsf C\)\\00};
+\node[state] (u) at (5,0) {\(\mathsf U\)\\01};
+\node[state] (h) at (5,-3.5) {\(\mathsf H\)\\11};
+\node[state] (x) at (0,-3.5) {\(\mathsf X\)\\10};
+\path[->]
+ (c) edge[loop above] node {\(\overline D\)} (c)
+     edge node[above] {\(D\)} (u)
+ (u) edge[loop right] node {\(\overline F\)} (u)
+     edge node[right] {\(F\)} (h)
+ (h) edge[loop below] node {\(D+\overline T\)} (h)
+     edge node[below] {\(\overline D T\)} (x)
+ (x) edge[loop left] node[left] {\(\overline D\,\overline F\)} (x)
+     edge node[left] {\(\overline D F\)} (c)
+     edge[bend left=12] node[above,sloped] {\(D\), even if \(F=1\)} (u);
+\end{tikzpicture}
+\end{center}
+The initialization arrow means that \(R=1\) forces \(\mathsf C\) from
+every state; this override is omitted from individual arrows.
+In \(\mathsf X\), detection takes priority over an endpoint pulse:
+\(D=F=1\) requests reopening. In \(\mathsf H\), detection also takes
+priority over timeout and restarts the timer.
+
+\section{State and output equations}
+First write next-state functions before applying initialization.
+The high state bit is one for either a next state of \(\mathsf H\)
+or a next state of \(\mathsf X\):
+\begin{align*}
+f_1
+&=s_1s_0+\overline{s_1}s_0F
+  +s_1\overline{s_0}\,\overline D\,\overline F.
+\end{align*}
+The low state bit is one for a next state of \(\mathsf U\) or
+\(\mathsf H\). A direct state expansion simplifies to
+\begin{align*}
+f_0
+&=\overline{s_1}\overline{s_0}D+\overline{s_1}s_0
+  +s_1s_0(D+\overline T)+s_1\overline{s_0}D\\
+&=D+s_0(\overline{s_1}+\overline T).
+\end{align*}
+Therefore the D inputs of the two state flip-flops are
+\[
+\boxed{s_1^+=\overline R f_1,\qquad
+s_0^+=\overline R f_0.}
+\]
+The Moore outputs are
+\[
+\boxed{\mathrm{OP}=\overline{s_1}s_0,\qquad
+\mathrm{CL}=s_1\overline{s_0}.}
+\]
+For every stable state,
+\(\mathrm{OP}\,\mathrm{CL}=0\). All four two-bit patterns are assigned
+states. The controller therefore needs only two state flip-flops,
+in addition to the timer flip-flops.
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Current state & Condition & Next state & Timer action\\
+\midrule
+\(\mathsf C\) & \(D=0\) / \(D=1\) & \(\mathsf C\) / \(\mathsf U\) & Clear\\
+\(\mathsf U\) & \(F=0\) / \(F=1\) & \(\mathsf U\) / \(\mathsf H\) & Clear\\
+\(\mathsf H\) & \(D=1\) & \(\mathsf H\) & Clear\\
+\(\mathsf H\) & \(D=0,T=0\) & \(\mathsf H\) & Increment\\
+\(\mathsf H\) & \(D=0,T=1\) & \(\mathsf X\) & Clear\\
+\(\mathsf X\) & \(D=1\) & \(\mathsf U\) & Clear\\
+\(\mathsf X\) & \(D=0,F=0\) & \(\mathsf X\) & Clear\\
+\(\mathsf X\) & \(D=0,F=1\) & \(\mathsf C\) & Clear\\
+\bottomrule
+\end{tabular}
+\end{center}
+In \(\mathsf C\), \(F\) is ignored; in \(\mathsf U\), \(D\) is ignored;
+in \(\mathsf H\), \(F\) is ignored. These are intentional consequences
+of the required operation, not missing cases.
+
+\clearpage
+\section{Gate-level state register and output decoder}
+The following diagrams implement the equations directly. Identically
+named nets are connected wires. An input bubble denotes inversion; it is
+equivalent to an explicit NOT gate on that input. Each DFF symbol has
+its D pin on the left and Q pin on the right. All DFFs in this chapter
+use the same \(1\,\mathrm{kHz}\) rising-edge clock; the clock wires are
+omitted as permitted by the question.
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US, every node/.style={font=\small},
+ gate/.style={draw,minimum height=10mm,minimum width=12mm},
+ ff/.style={draw,minimum height=13mm,minimum width=15mm}]
+\node[and gate US,gate,logic gate inputs=nn] (p1) at (2.5,2.3) {};
+\node[and gate US,gate,minimum height=15mm,logic gate inputs=inn] (p2) at (2.5,0) {};
+\node[and gate US,gate,minimum height=20mm,logic gate inputs=niii] (p3) at (2.5,-2.3) {};
+\foreach \pin/\lab in {1/s_1,2/s_0}
+  \draw (p1.input \pin) -- ++(-1.2,0) node[left] {\(\lab\)};
+\foreach \pin/\lab in {1/s_1,2/s_0,3/F}
+  \draw (p2.input \pin) -- ++(-1.2,0) node[left] {\(\lab\)};
+\foreach \pin/\lab in {1/s_1,2/s_0,3/D,4/F}
+  \draw (p3.input \pin) -- ++(-1.2,0) node[left] {\(\lab\)};
+\node[or gate US,gate,logic gate inputs=nnn] (sum) at (5.6,0) {};
+\draw (p1.output) -- ++(.7,0) |- (sum.input 1);
+\draw (p2.output) -- (sum.input 2);
+\draw (p3.output) -- ++(.7,0) |- (sum.input 3);
+\node[and gate US,gate,logic gate inputs=ni] (rst) at (8,0) {};
+\draw (sum.output) -- (rst.input 1);
+\draw (rst.input 2) -- ++(-.6,0) -- ++(0,-.9) node[below] {\(R\)};
+\node[ff] (ff) at (10.5,0) {DFF};
+\node[font=\scriptsize,anchor=west] at (ff.west) {D};
+\node[font=\scriptsize,anchor=east] at (ff.east) {Q};
+\draw (rst.output) -- (ff.west) node[midway,above] {\(s_1^+\)};
+\draw (ff.east) -- ++(.8,0) node[right] {\(s_1\)};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small},
+ gate/.style={draw,minimum height=10mm,minimum width=12mm},
+ ff/.style={draw,minimum height=13mm,minimum width=15mm}]
+\node[or gate US,gate,logic gate inputs=ii] (sum) at (1.5,0) {};
+\draw (sum.input 1) -- ++(-.7,0) node[left] {\(s_1\)};
+\draw (sum.input 2) -- ++(-.7,0) node[left] {\(T\)};
+\node[and gate US,gate,logic gate inputs=nn] (prod) at (4,0) {};
+\draw (sum.output) -- (prod.input 1);
+\draw (prod.input 2) -- ++(-.5,0) -- ++(0,-.8) node[below] {\(s_0\)};
+\node[or gate US,gate,logic gate inputs=nn] (fsum) at (6.2,0) {};
+\draw (prod.output) -- (fsum.input 1);
+\draw (fsum.input 2) -- ++(-.5,0) -- ++(0,-.8) node[below] {\(D\)};
+\node[and gate US,gate,logic gate inputs=ni] (rst) at (8.4,0) {};
+\draw (fsum.output) -- (rst.input 1);
+\draw (rst.input 2) -- ++(-.5,0) -- ++(0,-.8) node[below] {\(R\)};
+\node[ff] (ff) at (10.7,0) {DFF};
+\node[font=\scriptsize,anchor=west] at (ff.west) {D};
+\node[font=\scriptsize,anchor=east] at (ff.east) {Q};
+\draw (rst.output) -- (ff.west) node[midway,above] {\(s_0^+\)};
+\draw (ff.east) -- ++(.65,0) node[right] {\(s_0\)};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small},
+ gate/.style={draw,minimum height=10mm,minimum width=12mm}]
+\node[and gate US,gate,logic gate inputs=in] (op) at (1,0) {};
+\draw (op.input 1) -- ++(-1,0) node[left] {\(s_1\)};
+\draw (op.input 2) -- ++(-1,0) node[left] {\(s_0\)};
+\draw (op.output) -- ++(1,0) node[right] {\(\mathrm{OP}\)};
+\node[and gate US,gate,logic gate inputs=ni] (cl) at (7,0) {};
+\draw (cl.input 1) -- ++(-1,0) node[left] {\(s_1\)};
+\draw (cl.input 2) -- ++(-1,0) node[left] {\(s_0\)};
+\draw (cl.output) -- ++(1,0) node[right] {\(\mathrm{CL}\)};
+\end{tikzpicture}
+\end{center}
+The two state-register circuits have no hidden storage. Their feedback
+comes from the labeled \(s_1,s_0\) Q nets.
+
+\clearpage
+\section{A five-second timer with no off-by-one error}
+A 13-bit unsigned register \(c=c_{12}\cdots c_0\) is sufficient because
+\(2^{12}<5000<2^{13}\). During an uninterrupted open interval, count
+completed absent-person samples. Define
+\[
+H=s_1s_0,\qquad
+T=[c=4999],\qquad
+E=\overline R\,H\,\overline D\,\overline T.
+\]
+Here \(E\) enables incrementing. When \(E=0\), the counter is
+\emph{cleared}, not held:
+\[
+\boxed{c^+=
+\begin{cases}
+c+1,&E=1,\\
+0,&E=0.
+\end{cases}}
+\]
+Because \(H=0\) before the edge that enters \(\mathsf H\), the timer is
+zero at that entry edge. The next 4999 absent samples produce the counts
+1 through 4999. At the following, 5000th absent sample,
+\(D=0,T=1\), so the state becomes \(\mathsf X\) and the counter clears.
+The close command begins exactly \(5000\,\mathrm{ms}=5\,\mathrm{s}\)
+after the entry edge. A detection in \(\mathsf H\) resets the same
+sequence.
+
+\begin{center}
+\begin{tabular}{rllll}
+\toprule
+Edge after restart & Pre-edge count & \(D\) & Post-edge state & Post-edge count\\
+\midrule
+0 & --- & --- & \(\mathsf H\) & 0\\
+1 & 0 & 0 & \(\mathsf H\) & 1\\
+4999 & 4998 & 0 & \(\mathsf H\) & 4999\\
+5000 & 4999 & 0 & \(\mathsf X\) & 0\\
+\midrule
+Any edge in \(\mathsf H\) & Any reachable count & 1 & \(\mathsf H\) & 0\\
+\bottomrule
+\end{tabular}
+\end{center}
+Thus \(T=1\) alone does not request closing: the transition also requires
+\(D=0\). A person arriving on the timeout edge keeps the door open.
+For asynchronous physical arrival times there would be sampling
+quantization; the exam explicitly supplies synchronous inputs.
+
+\subsection{Terminal-count logic}
+The required bit pattern is
+\[
+4999=4096+512+256+128+4+2+1=(1001110000111)_2.
+\]
+The following four AND gates decode every bit. Input bubbles provide the
+six required complements.
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small},
+ gate/.style={draw,minimum height=18mm,minimum width=12mm}]
+\node[and gate US,gate,logic gate inputs=niin] (g3) at (2,2.4) {};
+\node[and gate US,gate,logic gate inputs=nnii] (g2) at (2,0) {};
+\node[and gate US,gate,logic gate inputs=iinn] (g1) at (2,-2.4) {};
+\foreach \pin/\lab in {1/12,2/11,3/10,4/9}
+ \draw (g3.input \pin) -- ++(-1,0) node[left] {\(c_{\lab}\)};
+\foreach \pin/\lab in {1/8,2/7,3/6,4/5}
+ \draw (g2.input \pin) -- ++(-1,0) node[left] {\(c_{\lab}\)};
+\foreach \pin/\lab in {1/4,2/3,3/2,4/1}
+ \draw (g1.input \pin) -- ++(-1,0) node[left] {\(c_{\lab}\)};
+\node[and gate US,gate,logic gate inputs=nnnn] (term) at (5.8,0) {};
+\draw (g3.output) -- ++(.9,0) |- (term.input 1);
+\draw (g2.output) -- (term.input 2);
+\draw (g1.output) -- ++(1.3,0) |- (term.input 3);
+\draw (term.input 4) -- ++(-.45,0) -- ++(0,-1.1) node[below] {\(c_0\)};
+\draw (term.output) -- ++(1,0) node[right] {\(T\)};
+\end{tikzpicture}
+\end{center}
+
+\clearpage
+\section{Expanded counter circuit}
+An incrementer has carry inputs
+\[
+p_0=1,\qquad p_1=c_0,\qquad
+p_2=c_1c_0,\quad \ldots,\quad
+p_{12}=c_{11}c_{10}\cdots c_0.
+\]
+Equivalently \(p_{i+1}=p_i c_i\) for \(i=0,\ldots,11\).
+These are combinational carry signals, not registers. Thus every counter
+bit has the explicit next-state equation
+\[
+\boxed{c_i^+=E(c_i\mathbin{\oplus}p_i),\qquad i=0,\ldots,12.}
+\]
+The AND with \(E\) implements the synchronous clear described above.
+The carry network may be built from the displayed AND recurrence or
+treated as the combinational part of an incrementer, as allowed by the
+question. All thirteen stored bits and their XOR/clear gates appear
+below; none is represented by an unexplained counter block.
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small},
+ gate/.style={draw,minimum height=7mm,minimum width=8mm},
+ ff/.style={draw,minimum width=14mm,minimum height=6mm}]
+\foreach \i in {0,...,12}{
+ \pgfmathsetmacro{\yy}{-0.90*\i}
+ \node[xor gate US,gate,logic gate inputs=nn] (xor\i) at (2,\yy) {};
+ \draw (xor\i.input 1) -- ++(-.7,0) node[left,font=\scriptsize] {\(c_{\i}\)};
+ \draw (xor\i.input 2) -- ++(-.7,0) node[left,font=\scriptsize] {\(p_{\i}\)};
+ \node[and gate US,gate,logic gate inputs=nn] (and\i) at (4.3,\yy) {};
+ \draw (xor\i.output) -- (and\i.input 1);
+ \draw (and\i.input 2) -- ++(-.4,0) node[left,font=\scriptsize] {\(E\)};
+ \node[ff] (ff\i) at (6.6,\yy) {DFF};
+ \node[font=\tiny,anchor=west] at (ff\i.west) {D};
+ \node[font=\tiny,anchor=east] at (ff\i.east) {Q};
+ \draw (and\i.output) -- (ff\i.west) node[midway,above,font=\scriptsize] {\(c_{\i}^+\)};
+ \draw (ff\i.east) -- ++(.7,0) node[right] {\(c_{\i}\)};
+}
+\end{tikzpicture}
+\end{center}
+Every \(c_i\) net on a gate input connects to the corresponding Q output.
+All \(E\) nets share the same enable. The next section specifies its
+gate, and the labeled feedback connections complete the timer circuit.
+
+\clearpage
+\section{Enable gate and complete interconnection}
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\node[and gate US,draw,minimum height=23mm,minimum width=15mm,
+ logic gate inputs=innii] (en) at (0,0) {};
+\foreach \pin/\lab in {1/R,2/s_1,3/s_0,4/D,5/T}
+ \draw (en.input \pin) -- ++(-1.4,0) node[left] {\(\lab\)};
+\draw (en.output) -- ++(1.4,0) node[right] {\(E\)};
+\end{tikzpicture}
+\end{center}
+This implements \(E=\overline R s_1s_0\overline D\,\overline T\).
+The complete interconnection below is a map of the already-expanded
+subcircuits, not a substitute for their flip-flop drawings.
+
+\begin{center}
+\begin{tikzpicture}[>=Latex,every node/.style={font=\small}]
+\node[block,minimum width=38mm,minimum height=22mm] (fsm) at (0,0)
+ {State equations\\and 2 DFFs};
+\node[block,minimum width=37mm,minimum height=22mm] (count) at (6,0)
+ {13 counter bit cells\\and carry logic};
+\node[block,minimum width=30mm] (dec) at (6,-3) {4999 decoder};
+\node[block,minimum width=30mm] (enable) at (0,-3) {Enable AND gate};
+\node[block,minimum width=36mm] (out) at (0,2.5) {Output decoder};
+\draw[signal] (-3.5,.5) node[left] {\(D,F,R\)} -- (fsm.west |- 0,.5);
+\draw[signal] (fsm.north) -- (out.south) node[midway,right] {\(s_1,s_0\)};
+\draw[signal] (out.east) -- ++(2,0) node[right] {\(\mathrm{OP},\mathrm{CL}\)};
+\draw[signal] (fsm.south) -- (enable.north) node[midway,left] {\(s_1,s_0\)};
+\draw[signal] (-3.5,-3) node[left] {\(R,D\)} -- (enable.west);
+\draw[signal] (enable.south) -- (0,-4.4) -- (8.5,-4.4)
+ -- (8.5,0) -- (count.east) node[pos=.35,below] {\(E\)};
+\draw[signal] (count.south) -- (dec.north) node[midway,right] {\(c_{12:0}\)};
+\draw[signal] (dec.west) -- (enable.east) node[midway,below] {\(T\)};
+\fill (3,-3) circle (1.2pt);
+\draw[signal] (3,-3) |- (fsm.east) node[pos=.7,above] {\(T\)};
+\end{tikzpicture}
+\end{center}
+The state logic receives \(D,F,T,R\). The counter needs \(E\) and its own
+Q feedback; the decoder reads all thirteen Q bits. There are exactly
+15 flip-flops: two for state and thirteen for time. No separate clock
+divider, latch, or hidden timer register is required.
+
+\section{Verification and representative traces}
+The accompanying \texttt{tools/verify\_final.py} compares the Boolean
+next-state equations with a separately written transition-table model
+for every state and every combination of \(D,F,T,R\). It also checks
+the XOR/AND counter circuit against arithmetic incrementing for every
+13-bit pattern, and checks all reachable timer values with both input
+bits. It verifies the ideal synchronous examination circuit without
+requiring a logic-simulation application. Selected traces include:
+\begin{enumerate}[itemsep=2pt,topsep=3pt]
+\item Closed with no detection: remain closed, with zero commands and
+zero timer.
+\item Detection, opening, endpoint pulse: enter \(\mathsf H\) with
+timer zero.
+\item 4999 absent samples: remain open. The 5000th absent sample starts
+closing.
+\item Detection on the would-be timeout edge: remain open and clear the
+timer; require another full 5000 absent samples.
+\item Detection while closing: enter \(\mathsf U\), with
+\((\mathrm{OP},\mathrm{CL})=(1,0)\), including when \(F=1\) simultaneously.
+\item Closing endpoint with \(D=0\): return to \(\mathsf C\).
+\item Initialization from any state: return to \(\mathsf C\) and clear
+all timer bits.
+\end{enumerate}

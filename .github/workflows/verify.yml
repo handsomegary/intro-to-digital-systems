@@ -1,0 +1,37 @@
+name: Verify logic and build the book
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check archive and digital logic
+        run: |
+          python tools/verify_archive.py
+          python tools/run_checks.py
+      - name: Install document tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-xetex texlive-latex-extra texlive-science fonts-texgyre
+          python -m pip install pypdf
+      - name: Rebuild and inspect the book
+        run: |
+          python tools/build.py --publish
+          python tools/verify_archive.py --pdf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digital-systems-questions-and-solutions
+          path: exam-solutions.pdf

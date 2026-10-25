@@ -1,0 +1,546 @@
+\chapter{Midterm Examination: Academic Year 112}
+\label{exam:midterm-112}
+The two supplied question pages contain Questions 1--10. The printed weights total 140\%, including the three separately weighted parts of Question 9; those weights are retained. Every problem is a paper-and-pencil logic-design question. Throughout this chapter, juxtaposition means AND, $+$ or $\vee$ means OR, and an overbar means NOT. Binary indices use the leftmost listed variable as the most significant bit.
+
+\section{1. Simplification by Boolean identities (10\%)}
+\begin{question}
+Reduce $F$ to a minimum sum-of-products expression. Use identities such as absorption and consensus; the stated hint is that the answer contains five literals.
+\begin{align*}
+F(a,b,c,d,e,f)&=(F_1\vee\overline{F_2})(F_2\vee F_3)F_2,\\
+F_1&=ac\bar d\vee bd\vee abc,\\
+F_2&=ac\bar d\vee bd\vee c\bar e f\vee d\bar e f
+      \vee\bar a cef\vee\bar a ef,\\
+F_3&=(\bar c\vee e\vee\bar f)(a\vee d\vee\bar f)
+       (a\vee\bar e\vee\bar f)\vee a\bar c f\\
+   &\quad\vee bd\bar f\vee aef\vee\bar b\bar c\bar e
+       \vee\bar c\bar e f\vee\bar c\bar d\bar e.
+\end{align*}
+\end{question}
+\begin{solution}
+Absorption removes the entire dependence on $F_3$:
+\[
+(F_2\vee F_3)F_2=F_2,
+\qquad (F_1\vee\overline{F_2})F_2=F_1F_2.
+\]
+Let $G=ac\bar d\vee bd$. The term $abc$ is the consensus of $ac\bar d$ and $bd$, since
+\[
+abc=abc(d\vee\bar d)=abcd\vee abc\bar d\le bd\vee ac\bar d.
+\]
+Consequently $F_1=G$. Also $F_2=G\vee H$ for its remaining terms, and hence
+\[
+\boxed{F=G(G\vee H)=ac\bar d\vee bd.}
+\]
+The two displayed product terms contain $3+2=5$ literals. Both are needed: with $b=0$, the function is $ac\bar d$; with $a=0$, it is $bd$. A prime-implicant enumeration gives $ac\bar d$, $bd$, and the redundant consensus $abc$, and the first two are essential. Thus two terms and five literals are minimal. Variables $e$ and $f$ do not affect the result.
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US, every node/.style={font=\small}]
+\node[and gate US,draw,logic gate inputs=nnn,minimum height=12mm] (g1) at (2,1) {};
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (g2) at (2,-1) {};
+\node[or gate US,draw,logic gate inputs=nn,minimum height=12mm] (go) at (5,0) {};
+\draw (g1.input 1)--++(-1.2,0) node[left] {$a$};
+\draw (g1.input 2)--++(-1.2,0) node[left] {$c$};
+\draw (g1.input 3)--++(-1.2,0) node[left] {$\bar d$};
+\draw (g2.input 1)--++(-1.2,0) node[left] {$b$};
+\draw (g2.input 2)--++(-1.2,0) node[left] {$d$};
+\draw (g1.output)--++(.7,0)|-(go.input 1);
+\draw (g2.output)--++(.7,0)|-(go.input 2);
+\draw (go.output)--++(1,0) node[right] {$F$};
+\node[not gate US,draw] (inv) at (2,-2.3) {};
+\draw (inv.input)--++(-.7,0) node[left] {$d$};
+\draw (inv.output)--++(.7,0) node[right] {$\bar d$};
+\end{tikzpicture}
+\end{center}
+Signals bearing the same label are electrically connected. The supplied answer's final AND symbol between the two surviving products must be OR; their AND would be identically zero because it contains $d\bar d$.
+\end{solution}
+
+\section{2. Combining incompletely specified functions (10\%)}
+\begin{question}
+Let
+\begin{align*}
+S_1&=\{0,3,6,11,13,15\},& S_2&=\{1,2,5,14\},\\
+S_3&=\{0,5,7,9,11,15\},& S_4&=\{1,3,13,14\}.
+\end{align*}
+For $F(a,b,c,d)=[\Sigma m(S_1)\vee d(S_2)]
+[\Sigma m(S_3)\vee d(S_4)]$, express $F$ as an on-set plus a don't-care set, $\Sigma m(\cdot)\vee d(\cdot)$.
+\end{question}
+\begin{solution}
+Here $d(S)$ denotes unspecified output values on $S$, not a Boolean signal that is automatically 1. In an AND, $0X=0$, $1X=X$, and $XX=X$. The definite on-set and possible on-set are
+\[
+M=S_1\cap S_3=\{0,11,15\},\qquad
+P=(S_1\cup S_2)\cap(S_3\cup S_4).
+\]
+The don't-care set is $P\setminus M=\{1,3,5,13,14\}$. Thus
+\[
+\boxed{F=\Sigma m(0,11,15)\vee d(1,3,5,13,14).}
+\]
+The complete three-valued calculation, with $G_1$ and $G_2$ denoting the two bracketed factors, is
+\begin{center}
+\begin{tabular}{c c c c@{\qquad}c c c c}
+\toprule
+Index &$G_1$&$G_2$&$F$&Index &$G_1$&$G_2$&$F$\\
+\midrule
+0&1&1&1&8&0&0&0\\
+1&$X$&$X$&$X$&9&0&1&0\\
+2&$X$&0&0&10&0&0&0\\
+3&1&$X$&$X$&11&1&1&1\\
+4&0&0&0&12&0&0&0\\
+5&$X$&1&$X$&13&1&$X$&$X$\\
+6&1&0&0&14&$X$&$X$&$X$\\
+7&0&1&0&15&1&1&1\\
+\bottomrule
+\end{tabular}
+\end{center}
+The reference's on-set entry 1 is a transcription error for 11: index 1 is unspecified in both factors, while index 11 is definitely 1 in both. On-set and don't-care sets must be disjoint.
+\end{solution}
+
+\section{3. Five-variable minimum SOP (10\%)}
+\begin{question}
+Simplify $F(A,B,C,D,E)=\Sigma m(S_1)+d(S_2)$ to minimum sum-of-products form, where
+\begin{align*}
+S_1&=\{5,13,15,19,22,23,24,26\},\\
+S_2&=\{0,3,7,8,12,16,18,21,27,30,31\}.
+\end{align*}
+\end{question}
+\begin{solution}
+Combine on-set and don't-care minterms to form cubes, but require coverage only of the on-set. The eight prime implicants are shown below; a dash in an $ABCDE$ pattern means that the corresponding variable is omitted.
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Pattern & Product & On-set minterms covered\\
+\midrule
+\bits{0110-} &$\bar A BC\bar D$&13\\
+\bits{0-1-1} &$\bar A CE$&5, 13, 15\\
+\bits{1-0-0} &$A\bar C\bar E$&24, 26\\
+\bits{1--1-} &$AD$&19, 22, 23, 26\\
+\bits{-01-1} &$\bar B CE$&5, 23\\
+\bits{-0-11} &$\bar B DE$&19, 23\\
+\bits{--000} &$\bar C\bar D\bar E$&24\\
+\bits{--111} &$CDE$&15, 23\\
+\bottomrule
+\end{tabular}
+\end{center}
+Minterm 22 is covered only by $AD$, making that prime essential. After choosing it, minterms $5,13,15,24$ remain. No one prime covers all four, so at least two more terms are required. The only three-literal prime that simultaneously covers $5,13,15$ is $\bar A CE$; minterm 24 can then be covered by either $A\bar C\bar E$ or $\bar C\bar D\bar E$. Two equally minimal answers are
+\[
+\boxed{F=AD\vee\bar A CE\vee A\bar C\bar E,}
+\qquad
+\boxed{F=AD\vee\bar A CE\vee\bar C\bar D\bar E.}
+\]
+Both have three product terms and eight literals. There is no one-literal prime and $AD$ is the only two-literal prime, so any three-term cover needs at least $2+3+3=8$ literals. This also proves the literal minimum. The accompanying Python program selects the second answer under its deterministic tie-break; the first is equally valid. They may differ on the don't-care inputs.
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (a1) at (2,1.7) {};
+\node[and gate US,draw,logic gate inputs=nnn,minimum height=14mm] (a2) at (2,0) {};
+\node[and gate US,draw,logic gate inputs=nnn,minimum height=14mm] (a3) at (2,-1.7) {};
+\node[or gate US,draw,logic gate inputs=nnn,minimum height=16mm] (o) at (5,0) {};
+\draw(a1.input 1)--++(-1,0)node[left]{$A$};
+\draw(a1.input 2)--++(-1,0)node[left]{$D$};
+\draw(a2.input 1)--++(-1,0)node[left]{$\bar A$};
+\draw(a2.input 2)--++(-1,0)node[left]{$C$};
+\draw(a2.input 3)--++(-1,0)node[left]{$E$};
+\draw(a3.input 1)--++(-1,0)node[left]{$A$};
+\draw(a3.input 2)--++(-1,0)node[left]{$\bar C$};
+\draw(a3.input 3)--++(-1,0)node[left]{$\bar E$};
+\draw(a1.output)--++(.7,0)|-(o.input 1);
+\draw(a2.output)--(o.input 2);
+\draw(a3.output)--++(.7,0)|-(o.input 3);
+\draw(o.output)--++(.8,0)node[right]{$F$};
+\foreach \name/\yy in {A/1.5,C/0,E/-1.5}{
+\node[not gate US,draw] (n\name) at (10,\yy) {};
+\draw(n\name.input)--++(-.5,0)node[left]{$\name$};
+\draw(n\name.output)--++(.5,0)node[right]{$\overline{\name}$};}
+\end{tikzpicture}
+\end{center}
+This drawing implements the first minimum. Repeated signal names denote connections; $B$ is unused.
+\end{solution}
+
+\section{4. A non-priority 7-to-3 encoder (10\%)}
+\begin{question}
+Write the truth table and draw a gate-level implementation of a 7-to-3 encoder, not a priority encoder. If input $a$ is all zero, output $b$ must also be all zero.
+\end{question}
+\begin{solution}
+The question does not number the seven input lines. Adopt the zero-based convention of the supplied reference: the inputs are $a[6:0]$, at most one is asserted, and an asserted $a[i]$ produces the binary index $i$. This convention maps both $a[0]=1$ and the all-zero input to output zero; there is no separate valid flag.
+\begin{center}
+\begin{tabular}{cc@{\qquad}cc}
+\toprule
+$a[6:0]$&$b[2:0]$&$a[6:0]$&$b[2:0]$\\
+\midrule
+\bits{0000000}&\bits{000}&\bits{0001000}&\bits{011}\\
+\bits{0000001}&\bits{000}&\bits{0010000}&\bits{100}\\
+\bits{0000010}&\bits{001}&\bits{0100000}&\bits{101}\\
+\bits{0000100}&\bits{010}&\bits{1000000}&\bits{110}\\
+\bottomrule
+\end{tabular}
+\end{center}
+Inputs with two or more asserted bits are outside this non-priority encoder's specified domain. The equations are
+\[
+\boxed{b_2=a_4\vee a_5\vee a_6,\quad
+b_1=a_2\vee a_3\vee a_6,\quad
+b_0=a_1\vee a_3\vee a_5.}
+\]
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\foreach \idx/\yy/\aa/\bb/\cc in {2/3/4/5/6,1/1.5/2/3/6,0/0/1/3/5}{
+\node[or gate US,draw,logic gate inputs=nnn,minimum height=12mm] (o\idx) at (2,\yy) {};
+\draw(o\idx.input 1)--++(-1,0)node[left]{$a_\aa$};
+\draw(o\idx.input 2)--++(-1,0)node[left]{$a_\bb$};
+\draw(o\idx.input 3)--++(-1,0)node[left]{$a_\cc$};
+\draw(o\idx.output)--++(1,0)node[right]{$b_\idx$};}
+\end{tikzpicture}
+\end{center}
+If inputs are instead named $a_1,\ldots,a_7$ and their numbers are to be encoded, the equally coherent one-based equations are $b_2=a_4\vee a_5\vee a_6\vee a_7$, $b_1=a_2\vee a_3\vee a_6\vee a_7$, and $b_0=a_1\vee a_3\vee a_5\vee a_7$. State the numbering convention; do not silently mix the two tables.
+\end{solution}
+
+\section{5. A two-bit 3-to-1 one-hot multiplexer (10\%)}
+\begin{question}
+Draw the gate-level implementation of a two-bit 3-to-1 multiplexer. Its inputs are $a_0[1:0]$, $a_1[1:0]$, and $a_2[1:0]$, selection is one-hot $s[2:0]$, and output is $b[1:0]$. Draw every bit individually; do not replace wires by a multi-bit bus notation.
+\end{question}
+\begin{solution}
+For each output bit $j\in\{0,1\}$,
+\[
+b[j]=(s[0]\wedge a_0[j])\vee(s[1]\wedge a_1[j])\vee(s[2]\wedge a_2[j]).
+\]
+There are six two-input AND gates and two three-input OR gates. The following two networks show all six data bits and both output bits separately.
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\foreach \bit/\xx in {0/0,1/8.2}{
+\begin{scope}[shift={(\xx,0)}]
+\foreach \sel/\yy in {0/1.6,1/0,2/-1.6}{
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (g\bit\sel) at (1.7,\yy) {};
+\draw(g\bit\sel.input 1)--++(-1.1,0)node[left]{$a_\sel[\bit]$};
+\draw(g\bit\sel.input 2)--++(-1.1,0)node[left]{$s[\sel]$};}
+\node[or gate US,draw,logic gate inputs=nnn,minimum height=16mm] (o\bit) at (4,0) {};
+\draw(g\bit0.output)--++(.6,0)|-(o\bit.input 1);
+\draw(g\bit1.output)--(o\bit.input 2);
+\draw(g\bit2.output)--++(.6,0)|-(o\bit.input 3);
+\draw(o\bit.output)--++(.7,0)node[right]{$b[\bit]$};
+\end{scope}}
+\end{tikzpicture}
+\end{center}
+If the select vector is zero, this implementation returns zero. If multiple select bits are asserted, it bitwise-ORs those words; that behavior is outside the one-hot promise and is not priority selection. The reference drawing has four AND gates per output, which is not the requested three-input-word multiplexer.
+\end{solution}
+
+\section{6. Decoder outputs and maxterms (10\%)}
+\begin{question}
+The active-high outputs 6, 3, and 0 of a 3-to-8 decoder feed an OR gate. The decoder inputs are $a$ (MSB), $b$, and $c$ (LSB). Express $F(a,b,c)$ in product-of-maxterms notation $\Pi M(\cdot)$.
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\draw(0,-1.7)rectangle(2,1.7);
+\node[align=center]at(1,2.05){3-to-8 decoder};
+\foreach \sig/\yy in {a/.8,b/0,c/-.8}{\draw(0,\yy)--++(-.8,0)node[left]{$\sig$};}
+\foreach \idx in {0,...,7}{
+\pgfmathsetmacro{\yy}{-1.4+.4*\idx}
+\node[anchor=east]at(1.9,\yy){\idx};
+\draw(2,\yy)--(2.5,\yy);}
+\node[or gate US,draw,logic gate inputs=nnn,minimum height=14mm] (o) at (4.5,0) {};
+\draw(2.5,1)--(3,1)|-(o.input 1);
+\draw(2.5,-.2)--(3.3,-.2)|-(o.input 2);
+\draw(2.5,-1.4)--(3,-1.4)|-(o.input 3);
+\draw(o.output)--++(.8,0)node[right]{$F$};
+\end{tikzpicture}
+\end{center}
+\end{question}
+\begin{solution}
+Each decoder output $i$ is the minterm with binary index $i=4a+2b+c$. Therefore $F=\Sigma m(0,3,6)$, and its zeros are the five remaining indices:
+\[
+\boxed{F=\Pi M(1,2,4,5,7).}
+\]
+Expanding verifies the maxterm convention:
+\begin{align*}
+F={}&(a\vee b\vee\bar c)(a\vee\bar b\vee c)
+(\bar a\vee b\vee c)\\
+&\quad(\bar a\vee b\vee\bar c)(\bar a\vee\bar b\vee\bar c).
+\end{align*}
+A maxterm vanishes at its named index, so a 1 in the index produces a complemented literal. In particular the last factor must vanish at $111$, not $011$ as in the supplied expansion.
+\end{solution}
+
+\section{7. A one-hot 1-to-4 demultiplexer (10\%)}
+\begin{question}
+A demultiplexer sends input $a$ to one of $b_0,b_1,b_2,b_3$. Selection $s[3:0]$ is one-hot or all zero. If $s[i]=1$, require $b_i=a$ and all other outputs zero. If $s$ is all zero, all outputs must be zero. Draw a gate-level circuit.
+\end{question}
+\begin{solution}
+Each output needs one two-input AND gate:
+\[
+\boxed{b_i=a\wedge s[i],\qquad i=0,1,2,3.}
+\]
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\draw(-1,1)--(-1,-4.5)node[below]{$a$};
+\foreach \idx/\yy in {0/0,1/-1.3,2/-2.6,3/-3.9}{
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (g\idx) at (2,\yy) {};
+\draw(g\idx.input 1)--(-1,\yy |- g\idx.input 1);
+\fill(-1,\yy |- g\idx.input 1)circle(1.1pt);
+\draw(g\idx.input 2)--++(-.8,0)node[left]{$s[\idx]$};
+\draw(g\idx.output)--++(1,0)node[right]{$b_\idx$};}
+\end{tikzpicture}
+\end{center}
+One-hot selection leaves one gate enabled; all-zero selection disables all four. Multiple asserted select bits are not part of the stated input domain.
+\end{solution}
+
+\section{8. Five-bit negative two's-complement numbers (10\%)}
+\begin{question}
+List every negative integer representable in five-bit signed two's-complement form, together with its bit pattern.
+\end{question}
+\begin{solution}
+A five-bit signed word has range $-16$ through $15$. A negative integer $x$ is represented by the unsigned bit pattern for $32+x$:
+\begin{center}
+\begin{tabular}{r c@{\qquad}r c@{\qquad}r c@{\qquad}r c}
+\toprule
+$x$&Bits&$x$&Bits&$x$&Bits&$x$&Bits\\
+\midrule
+$-1$&\bits{11111}&$-5$&\bits{11011}&$-9$&\bits{10111}&$-13$&\bits{10011}\\
+$-2$&\bits{11110}&$-6$&\bits{11010}&$-10$&\bits{10110}&$-14$&\bits{10010}\\
+$-3$&\bits{11101}&$-7$&\bits{11001}&$-11$&\bits{10101}&$-15$&\bits{10001}\\
+$-4$&\bits{11100}&$-8$&\bits{11000}&$-12$&\bits{10100}&$-16$&\bits{10000}\\
+\bottomrule
+\end{tabular}
+\end{center}
+For example, $-13$ is $32-13=19=\bits{10011}_2$. The most negative value has no positive five-bit counterpart; negating $-16$ in five bits overflows.
+\end{solution}
+
+\section{9. Division cells and a binary-to-BCD converter}
+\begin{question}
+An existing combinational chain computes the remainder of unsigned $a[n-1:0]$ divided by 5. Each unit cell receives a three-bit old remainder $c[2:0]$ and the next input bit $b$, and produces a three-bit new remainder. The first cell receives $c_2=0$, $c_1=a[n-1]$, $c_0=a[n-2]$, and $b=a[n-3]$. Later cells consume the remaining input bits in descending order. The last remainder is $a\bmod5$.
+\end{question}
+\begin{center}
+\begin{tikzpicture}[every node/.style={font=\small}]
+\node[block,minimum width=35mm,minimum height=18mm] (u) at (0,0) {Remainder cell\\$r=(2c+b)\bmod5$};
+\draw[signal](-3.25,0)node[left]{$c[2:0]$}--(u.west);
+\draw[signal](0,1.6)node[above]{$b$}--(u.north);
+\draw[signal](u.east)--++(1.5,0)node[right]{$r[2:0]$};
+\end{tikzpicture}
+\end{center}
+
+\subsection{(a) Add the quotient output (10\%)}
+\begin{question}
+Add one output $q$ to each unit cell so that the chain also produces the quotient $\lfloor a/5\rfloor$. Design only this added output; the existing remainder outputs need not be redesigned.
+\end{question}
+\begin{solution}
+An old remainder satisfies $0\le c\le4$. Appending a bit gives $x=2c+b\in\{0,\ldots,9\}$. The quotient bit and remainder must satisfy
+\[
+x=5q+r,\qquad 0\le r<5,
+\qquad q=\begin{cases}0&x<5,\\1&x\ge5.\end{cases}
+\]
+The complete valid-input table is
+\begin{center}
+\begin{tabular}{c c c c c@{\qquad}c c c c c}
+\toprule
+$c$&$b$&$x$&$q$&$r$&$c$&$b$&$x$&$q$&$r$\\
+\midrule
+0&0&0&0&0&0&1&1&0&1\\
+1&0&2&0&2&1&1&3&0&3\\
+2&0&4&0&4&2&1&5&1&0\\
+3&0&6&1&1&3&1&7&1&2\\
+4&0&8&1&3&4&1&9&1&4\\
+\bottomrule
+\end{tabular}
+\end{center}
+Since $c=4$ asserts $c_2$, $c=3$ asserts $c_1c_0$, and $c=2$ crosses the threshold only when $b=1$,
+\[
+\boxed{q=c_2\vee c_1c_0\vee c_1b=c_2\vee c_1(c_0\vee b).}
+\]
+The impossible old remainders 5, 6, and 7 are don't-cares, not extra operating states. A factored implementation is
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\node[or gate US,draw,logic gate inputs=nn,minimum height=9mm] (o1) at (1,0) {};
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (a1) at (3.3,0) {};
+\node[or gate US,draw,logic gate inputs=nn,minimum height=9mm] (o2) at (5.7,0) {};
+\draw(o1.input 1)--++(-.8,0)node[left]{$c_0$};
+\draw(o1.input 2)--++(-.8,0)node[left]{$b$};
+\draw(o1.output)--++(.6,0)|-(a1.input 2);
+\draw(a1.input 1)--++(-.4,0)--++(0,.8)node[above]{$c_1$};
+\draw(a1.output)--++(.6,0)|-(o2.input 2);
+\draw(o2.input 1)--++(-.4,0)--++(0,.8)node[above]{$c_2$};
+\draw(o2.output)--++(.8,0)node[right]{$q$};
+\end{tikzpicture}
+\end{center}
+The original answer's expression does not satisfy the table: at $c=2,b=0$ it incorrectly asserts $q$, and at $c=4,b=0$ it fails to assert $q$.
+
+To see why the cascade yields the full quotient, suppose the processed prefix obeys $p=5Q+c$. Appending $b$ gives
+\[
+2p+b=5(2Q+q)+r.
+\]
+Thus append each new cell's $q$ bit to the accumulated quotient. The initial two-bit prefix is at most 3, so its quotient is zero and it can directly initialize $c$. There are $n-2$ cells and $n-2$ quotient bits $q[n-3:0]$; the two leading full-width quotient bits are zero.
+\end{solution}
+
+\subsection{(b) Recover the decimal remainder with three full adders (10\%)}
+\begin{question}
+Given the final remainder $r_2r_1r_0=a\bmod5$ and the least significant quotient bit $q_0$, produce $a\bmod10$ using exactly three full adders and no other logic.
+\end{question}
+\begin{solution}
+Write $a=5Q+r$ and $Q=2T+q_0$. Then
+\[
+a=10T+5q_0+r,\qquad 0\le 5q_0+r\le9,
+\qquad\boxed{d[3:0]=a\bmod10=r+5q_0.}
+\]
+The four-bit operand $5q_0$ is $(0,q_0,0,q_0)_2$. Add it to $(0,r_2,r_1,r_0)_2$ using the three full adders below. The most significant output is the final carry; no fourth adder is needed.
+\begin{center}
+\begin{tikzpicture}[every node/.style={font=\small}]
+\foreach \idx/\xx in {0/0,1/4.2,2/8.4}{
+\node[block,minimum width=21mm,minimum height=15mm] (fa\idx) at (\xx,0) {FA\idx};
+\draw[signal]([xshift=-5mm,yshift=9mm]fa\idx.north)node[above]{$r_\idx$}--([xshift=-5mm]fa\idx.north);
+\draw[signal](fa\idx.south)--++(0,-.8)node[below]{$d_\idx$};}
+\draw[signal]([xshift=5mm,yshift=9mm]fa0.north)node[above]{$q_0$}--([xshift=5mm]fa0.north);
+\draw[signal]([xshift=5mm,yshift=9mm]fa1.north)node[above]{$0$}--([xshift=5mm]fa1.north);
+\draw[signal]([xshift=5mm,yshift=9mm]fa2.north)node[above]{$q_0$}--([xshift=5mm]fa2.north);
+\draw[signal](-2,0)node[left]{$k_0=0$}--(fa0.west);
+\draw[signal](fa0.east)--node[above]{$k_1$}(fa1.west);
+\draw[signal](fa1.east)--node[above]{$k_2$}(fa2.west);
+\draw[signal](fa2.east)--++(1,0)node[right]{$d_3=k_3$};
+\end{tikzpicture}
+\end{center}
+In this diagram each full adder's top wires are its two operands, the left wire is carry-in, the right wire is carry-out, and the lower wire is the sum. Equivalently,
+\begin{align*}
+(d_0,k_1)&=\operatorname{FA}(r_0,q_0,0),\\
+(d_1,k_2)&=\operatorname{FA}(r_1,0,k_1),\\
+(d_2,d_3)&=\operatorname{FA}(r_2,q_0,k_2).
+\end{align*}
+Here $\operatorname{FA}$ returns $(\text{sum},\text{carry})$. Only wires, fanout, the constant 0, and the three allowed full adders are used. Do not interchange $r_0$ and $r_2$: the reference figure's bit labels would reverse their binary weights.
+\end{solution}
+
+\subsection{(c) A complete 13-bit to four-digit BCD converter (20\%)}
+\begin{question}
+Construct a 13-bit binary-to-four-digit-BCD converter. The input is $a[12:0]$ and outputs are $b_3[3:0]$, $b_2[3:0]$, $b_1[3:0]$, and $b_0[3:0]$, with $b_3$ the most significant decimal digit. You may use the circuits from parts (a) and (b). Draw every unit cell explicitly; do not omit repeated cells for simplicity.
+\end{question}
+\begin{solution}
+The key is that dividing an unsigned number by 10 can be performed by dividing by 5 and dropping the quotient's least significant bit:
+\[
+\left\lfloor\frac{x}{10}\right\rfloor
+=\left\lfloor\frac{\lfloor x/5\rfloor}{2}\right\rfloor.
+\]
+Define $x^{(0)}=a$. At stage $k$, the division-by-5 chain produces quotient $q^{(k)}$ and remainder $R^{(k)}$. The three-full-adder circuit from (b), denoted $D_k$, gives
+\[
+b_k=R^{(k)}+5q^{(k)}_0,\qquad
+x^{(k+1)}=q^{(k)}\text{ with bit 0 discarded}.
+\]
+The required widths and cell counts follow from the construction, including leading zeros where necessary:
+\begin{center}
+\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{c c c c c c}
+\toprule
+Stage & Input width & Input maximum & Quotient bits & Next input & Cells\\
+\midrule
+0&13&8191&$q^{(0)}[10:0]$&$x^{(1)}[9:0]=q^{(0)}[10:1]$&11\\
+1&10&819&$q^{(1)}[7:0]$&$x^{(2)}[6:0]=q^{(1)}[7:1]$&8\\
+2&7&81&$q^{(2)}[4:0]$&$x^{(3)}[3:0]=q^{(2)}[4:1]$&5\\
+\bottomrule
+\end{tabular}
+\end{center}
+The final $x^{(3)}=\lfloor a/1000\rfloor$ is between 0 and 8. Its four-bit binary encoding is already a valid BCD digit, so wire
+\[
+\boxed{b_3[3:0]=x^{(3)}[3:0]=q^{(2)}[4:1].}
+\]
+No fourth division stage is necessary. The design uses exactly $11+8+5=24$ unit cells and three copies of the three-full-adder digit circuit, hence nine full adders in those digit circuits.
+
+\textbf{Cell convention used in the complete drawings.} Each box $U_j$ is one existing remainder unit augmented with the quotient gate from (a). Its left and right wires carry three-bit $c$ and $r$, its upper wire carries one input bit, and its lower wire carries one quotient bit. The three initial remainder bits are labelled individually beside the first cell. Every box and quotient tap is explicitly drawn below; there are no omitted cells. Each repeated signal label identifies the same wire in the following drawing or equation.
+
+\begin{minipage}{\linewidth}
+\textbf{Stage 0: $x^{(0)}=a$, eleven cells.}
+\begin{center}% explicit cell row
+\begin{tikzpicture}[every node/.style={font=\scriptsize},x=1cm,y=1cm]
+\foreach \j [count=\i from 0] in {10,9,8,7,6,5,4,3,2,1,0}{
+\node[draw,minimum width=7.7mm,minimum height=10mm] (u\j) at (1.12*\i,0) {$U_{\j}$};
+\draw[signal](1.12*\i,.95)node[above]{$a_{\j}$}--(u\j.north);
+\draw[signal](u\j.south)--++(0,-.6)node[below]{$q^{(0)}_{\j}$};}
+\draw[signal](-.8,0)node[left,align=right]{$c_2=0$\\$c_1=a_{12}$\\$c_0=a_{11}$}--(u10.west);
+\foreach \j/\next in {10/9,9/8,8/7,7/6,6/5,5/4,4/3,3/2,2/1,1/0}{\draw[signal](u\j.east)--(u\next.west);}
+\draw[signal](u0.east)--++(.9,0)node[right]{$R^{(0)}$};
+\end{tikzpicture}
+\end{center}
+\end{minipage}\par\medskip
+
+\begin{minipage}{\linewidth}
+\textbf{Stage 1: $x^{(1)}[9:0]=q^{(0)}[10:1]$, eight cells.}
+\begin{center}% explicit cell row
+\begin{tikzpicture}[every node/.style={font=\scriptsize},x=1cm,y=1cm]
+\foreach \j [count=\i from 0] in {7,6,5,4,3,2,1,0}{
+\node[draw,minimum width=8.5mm,minimum height=10mm] (u\j) at (1.28*\i,0) {$U_{\j}$};
+\draw[signal](1.28*\i,.95)node[above]{$x^{(1)}_{\j}$}--(u\j.north);
+\draw[signal](u\j.south)--++(0,-.6)node[below]{$q^{(1)}_{\j}$};}
+\draw[signal](-.8,0)node[left,align=right]{$c_2=0$\\$c_1=x^{(1)}_9$\\$c_0=x^{(1)}_8$}--(u7.west);
+\foreach \j/\next in {7/6,6/5,5/4,4/3,3/2,2/1,1/0}{\draw[signal](u\j.east)--(u\next.west);}
+\draw[signal](u0.east)--++(.9,0)node[right]{$R^{(1)}$};
+\end{tikzpicture}
+\end{center}
+\end{minipage}\par\medskip
+
+\begin{minipage}{\linewidth}
+\textbf{Stage 2: $x^{(2)}[6:0]=q^{(1)}[7:1]$, five cells.}
+\begin{center}% explicit cell row
+\begin{tikzpicture}[every node/.style={font=\scriptsize},x=1cm,y=1cm]
+\foreach \j [count=\i from 0] in {4,3,2,1,0}{
+\node[draw,minimum width=10mm,minimum height=10mm] (u\j) at (1.5*\i,0) {$U_{\j}$};
+\draw[signal](1.5*\i,.95)node[above]{$x^{(2)}_{\j}$}--(u\j.north);
+\draw[signal](u\j.south)--++(0,-.6)node[below]{$q^{(2)}_{\j}$};}
+\draw[signal](-.8,0)node[left,align=right]{$c_2=0$\\$c_1=x^{(2)}_6$\\$c_0=x^{(2)}_5$}--(u4.west);
+\foreach \j/\next in {4/3,3/2,2/1,1/0}{\draw[signal](u\j.east)--(u\next.west);}
+\draw[signal](u0.east)--++(.9,0)node[right]{$R^{(2)}$};
+\end{tikzpicture}
+\end{center}
+\end{minipage}\par\medskip
+
+\textbf{All output connections.} The digit circuits below are three distinct instances of the three-full-adder circuit already drawn in part (b). The direct fourth-digit connection is also shown.
+\begin{center}
+\begin{tikzpicture}[every node/.style={font=\small}]
+\foreach \k/\yy in {0/0,1/-1.7,2/-3.4}{
+\node[block,minimum width=28mm,minimum height=12mm] (d\k) at (1,\yy) {$D_\k$: three FAs};
+\draw[signal]([xshift=-13mm,yshift=3mm]d\k.west)node[left]{$R^{(\k)}[2:0]$}--([yshift=3mm]d\k.west);
+\draw[signal]([xshift=-13mm,yshift=-3mm]d\k.west)node[left]{$q^{(\k)}_0$}--([yshift=-3mm]d\k.west);
+\draw[signal](d\k.east)--++(1.2,0)node[right]{$b_\k[3:0]$};}
+\draw[signal](-1.7,-5)node[left]{$q^{(2)}[4:1]$}--(3.5,-5)node[right]{$b_3[3:0]$};
+\end{tikzpicture}
+\end{center}
+Examples check both ends and a carry boundary: $0\mapsto0000$, $999\mapsto0999$, $1000\mapsto1000$, and $8191\mapsto8191$ in BCD digits. The published verification script simulates the unit-cell recurrence and the individual full adders for every input from 0 to 8191, and reconstructs the original integer from the four output digits.
+\end{solution}
+
+\section{10. Signed two's-complement comparison (20\%)}
+\begin{question}
+Construct an $n$-bit magnitude comparator for signed two's-complement inputs $a[n-1:0]$ and $b[n-1:0]$. Its output must be 1 when $a>b$ and 0 otherwise. An unsigned magnitude comparator may be used.
+\end{question}
+\begin{solution}
+Let $s_a=a[n-1]$ and $s_b=b[n-1]$ be the sign bits, and let $U$ be the result of comparing the full $n$-bit patterns as unsigned integers. Opposite signs determine the answer immediately; with equal signs, unsigned and signed order agree because both values receive the same offset $-2^n$ if negative.
+\[
+\boxed{G=(\bar s_a s_b)\vee
+\bigl[\overline{s_a\oplus s_b}\wedge U\bigr],\qquad U=[a>_{\rm unsigned}b].}
+\]
+\begin{center}
+\begin{tabular}{cccl}
+\toprule
+$s_a$&$s_b$&$G$&Reason\\
+\midrule
+0&1&1&Every nonnegative value exceeds every negative value.\\
+1&0&0&Every negative value is smaller than every nonnegative value.\\
+0&0&$U$&Both are nonnegative.\\
+1&1&$U$&Both signed values equal their unsigned values minus $2^n$.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[circuit logic US,every node/.style={font=\small}]
+\node[block,minimum width=27mm,minimum height=18mm] (cmp) at (1,2.1) {Unsigned\\$n$-bit $a>b$};
+\draw[signal]([xshift=-10mm,yshift=4mm]cmp.west)node[left]{$a[n-1:0]$}--([yshift=4mm]cmp.west);
+\draw[signal]([xshift=-10mm,yshift=-4mm]cmp.west)node[left]{$b[n-1:0]$}--([yshift=-4mm]cmp.west);
+\node[xnor gate US,draw,logic gate inputs=nn,minimum height=9mm] (eq) at (1,0) {};
+\draw(eq.input 1)--++(-1,0)node[left]{$s_a$};
+\draw(eq.input 2)--++(-1,0)node[left]{$s_b$};
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (same) at (4.5,1.1) {};
+\draw(cmp.east)--++(.7,0)node[above]{$U$}|-(same.input 1);
+\draw(eq.output)--++(.7,0)|-(same.input 2);
+\node[and gate US,draw,logic gate inputs=nn,minimum height=9mm] (diff) at (4.5,-1.2) {};
+\draw(diff.input 1)--++(-1.1,0)node[left]{$\bar s_a$};
+\draw(diff.input 2)--++(-1.1,0)node[left]{$s_b$};
+\node[or gate US,draw,logic gate inputs=nn,minimum height=9mm] (out) at (7,0) {};
+\draw(same.output)--++(.6,0)|-(out.input 1);
+\draw(diff.output)--++(.6,0)|-(out.input 2);
+\draw(out.output)--++(.8,0)node[right]{$G=[a>b]$};
+\node[not gate US,draw] (inv) at (1,-2) {};
+\draw(inv.input)--++(-.7,0)node[left]{$s_a$};
+\draw(inv.output)--++(.7,0)node[right]{$\bar s_a$};
+\end{tikzpicture}
+\end{center}
+Equality makes $U=0$, so the output is correctly zero. The construction also works for $n=1$. It avoids a potentially overflowing signed subtraction. The supplied answer's prose labels the opposite-sign decisions as $a<b$ even though its truth decisions answer $a>b$; the required relation is $a>b$ throughout.
+\end{solution}
+
+\section{Verification scope}
+The companion script independently checks all 64 assignments of Question 1, all partial values in Question 2, every valid cube and minimum prime cover for Question 3, all promised encoder/mux/demux inputs, the complete decoder and five-bit negative-number tables, division cells, all 8192 BCD inputs, and all signed comparisons for widths 1--8. These are Boolean and arithmetic checks. They do not model propagation delay, hazards, or electrical implementation constraints not specified by the exam.
